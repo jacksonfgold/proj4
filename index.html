@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Stitching and Rectification Project</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+        h1, h2, h3 {
+            color: #2F4F4F;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        .section {
+            margin-bottom: 50px;
+        }
+        .image-container {
+            text-align: center;
+        }
+        .image-container img {
+            margin: 10px;
+            border: 1px solid #ddd;
+            padding: 5px;
+        }
+        .caption {
+            font-size: 0.9em;
+            color: #555;
+        }
+        .code {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-left: 3px solid #ccc;
+            font-family: monospace;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>IMAGE WARPING and MOSAICING</h1>
+        <p>The goal of this project was to experiment with different aspects of image warping and create a seamless image mosaic by registering, projective warping, resampling, and compositing multiple images.</p>
+    </header>
+
+    <section class="section" id="overview">
+        <h2>Overview</h2>
+        <p>In this project, I implement image stitching and rectification techniques to create panoramic images and rectify planar surfaces in images. The key steps involve recovering homographies, warping images, performing image rectification, and blending images into a mosaic.</p>
+    </section>
+
+    <section class="section" id="shoot-pictures">
+        <h2>Step 1: Shooting and Digitizing Pictures </h2>
+        <p>I started by capturing two photographs of 3 scenes that have a significant overlap, ensuring a good basis for mosaicing. I also ensured a significant overlap of 40% to 70% between each photo to facilitate registration. I took these photos of the stadium and sunset while on a run., the photo inside the stadium during the NC State game.</p>
+        <div class="image-container">
+            <img src="images/col1.png" alt="Photos captured for mosaicing" width="400" 
+            height="500">
+            <img src="images/col2.png" alt="Photos captured for mosaicing" width="400" 
+            height="500">
+
+            <p class="caption">Figure 1: Photos captured for mosaicing</p>
+        </div>
+
+        <div class="image-container">
+            <img src="images/imagea.png" alt="Photos captured for mosaicing" width="400" 
+            height="500">
+            <img src="images/imageb.png" alt="Photos captured for mosaicing" width="400" 
+            height="500">
+
+            <p class="caption">Figure 1: Photos captured for mosaicing</p>
+        </div>
+        
+ 
+
+        <div class="image-container">
+            <img src="images/sun1.png" alt="Photos captured for mosaicing" width="400" 
+            height="500">
+            <img src="images/sun2.png" alt="Photos captured for mosaicing" width="400" 
+            height="500">
+
+            <p class="caption">Figure 1: Photos captured for mosaicing</p>
+        </div>
+    </section>
+
+    <section class="section" id="recover-homographies">
+        <h2>Step 2: Recovering Homographies </h2>
+        <p>To align the images, I computed homographies by manually selecting point correspondences between pairs of images. I developed a function to calculate the 3x3 homography matrix H using the least-squares method, given more than four point correspondences. Establishing accurate correspondences was crucial to avoid instability in the transformation.</p>
+        <div class="code">
+            # Compute homography matrix H<br>
+            H = computeH(points_img1, points_img2)
+        </div>
+        <div class="image-container">
+            <img src="images/points_col.png" alt="Recovered homography matrix illustration" width="800" 
+            height="2000">
+            <p class="caption">Figure 2: Recovered homography matrix illustration</p>
+        </div>
+    </section>
+
+    <section class="section" id="warp-images">
+        <h2>Step 3: Warping Images </h2>
+        <p>Once the homographies were calculated, I used them to warp each image to align with the reference image. I implemented an image warping function using inverse warping and ensured resampling was smooth to avoid aliasing. I used grid interpolation techniques for an accurate warping result, and I rectified images to verify the homography correctness.</p>
+        <div class="code">
+            # Warp image using homography H<br>
+            warped_im, alpha_mask, x_min, y_min, transformed_corners = warpImage(im, H)
+        </div>
+        <div class="image-container">
+            <img src="images/rec.png" alt="Example of image warping and rectification" width="400" height="800">
+            <img src="images/rec1_out.png" alt="Example of image warping and rectification">
+            <p class="caption">Figure 3: First example of image warping and rectification</p>
+        </div>
+
+        <div class="image-container">
+            <img src="images/rec2.png" alt="Example of image warping and rectification" width="400" height="800">
+            <img src="images/rec2_out.png" alt="Example of image warping and rectification">
+            <p class="caption">Figure 3: First example of image warping and rectification</p>
+        </div>
+    </section>
+
+    <section class="section" id="blend-mosaic">
+        <h2>Step 4: Blending Images into a Mosaic </h2>
+        <p>After warping the images into alignment, I blended them into a single mosaic. I initially tried averaging, but since it wasn't working, I ended up using the Laplacian pyramid functions from the previous projects to avoid harsh edges and create a smooth blend. </p>
+        
+        <div class="image-container">
+            <img src="images/col1.png" alt="Photos captured for mosaicing" width="400" 
+            height="500">
+            <img src="images/col2.png" alt="Photos captured for mosaicing" width="400" 
+            height="500">
+
+            <p class="caption">Figure 1: Photos captured for mosaicing</p>
+        </div>
+        
+        <div class="image-container">
+            <img src="images/mosaic_result.jpg" alt="Image mosaic blending process">
+            <p class="caption">Figure 4: Image mosaic blending process</p>
+        </div>
+        <p>I also did it again on a couple more images</p>
+
+
+        <div class="image-container">
+            <img src="images/imagea.png" alt="Photos captured for mosaicing" width="400" 
+            height="500">
+            <img src="images/imageb.png" alt="Photos captured for mosaicing" width="400" 
+            height="500">
+
+            <p class="caption">Figure 1: Photos captured for mosaicing</p>
+        </div>
+        
+        <div class="image-container">
+            <img src="images/mosaic_result_game.jpg" alt="Image mosaic blending process">
+            <p class="caption">Figure 4: Image mosaic blending process</p>
+        </div>
+
+
+        <p>This next one didnt work out as well due to the difference in lighting from the two images/p>
+
+        <div class="image-container">
+            <img src="images/sun1.png" alt="Photos captured for mosaicing" width="400" 
+            height="500">
+            <img src="images/sun2.png" alt="Photos captured for mosaicing" width="400" 
+            height="500">
+
+            <p class="caption">Figure 1: Photos captured for mosaicing</p>
+        </div>
+        
+        <div class="image-container">
+            <img src="images/mosaic_result_sun.jpg" alt="Image mosaic blending process">
+            <p class="caption">Figure 4: Image mosaic blending process</p>
+        </div>
+    </section>
+
+    <section class="section" id="bugs-challenges">
+        <h2>Bugs and Challenges</h2>
+        <p>During the implementation, I encountered some challenges:</p>
+        <ul>
+            <li><strong>Misalignment of Images:</strong> Initially, the images were not aligning correctly in the mosaic due to incorrect offset calculations. I resolved this by computing the overall bounding box of both images and adjusting the offsets accordingly.</li>
+            <li><strong>Point Selection Issues:</strong> Simultaneous point selection on both images caused confusion and incorrect point mapping. I modified the point selection process to be sequential, ensuring accurate correspondence between points.</li>
+            <li><strong>Broadcasting Errors:</strong> While blending images, I faced broadcasting errors due to mismatched array shapes. Adjusting the indexing and ensuring compatible shapes resolved this issue.</li>
+        </ul>
+    </section>
+
+    <section class="section" id="conclusion">
+        <h2>Conclusion</h2>
+        <p>By implementing homography estimation, image warping, and blending techniques, I successfully created panoramas and performed image rectification. This project demonstrates fundamental concepts in computer vision and image processing.</p>
+    </section>
+
+ 
+</body>
+</html>
