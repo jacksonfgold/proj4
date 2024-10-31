@@ -46,6 +46,8 @@
         <p>The goal of this project was to experiment with different aspects of image warping and create a seamless image mosaic by registering, projective warping, resampling, and compositing multiple images.</p>
     </header>
 
+    <h1>Part A:</h1>
+
     <section class="section" id="overview">
         <h2>Overview</h2>
         <p>In this project, I implement image stitching and rectification techniques to create panoramic images and rectify planar surfaces in images. The key steps involve recovering homographies, warping images, performing image rectification, and blending images into a mosaic.</p>
@@ -184,6 +186,140 @@
         <h2>Conclusion</h2>
         <p>By implementing homography estimation, image warping, and blending techniques, I successfully created panoramas and performed image rectification. This project demonstrates fundamental concepts in computer vision and image processing.</p>
     </section>
+
+    <h1>Part B:</h1>
+
+    <section class="section" id="">
+        <h2>Step 1: Harris Corners </h2>
+
+        <p>In this step, I utilized the provided function to perform Harris Corner Detection on each image to identify key interest points. The Harris Corner Detector is a fundamental algorithm in computer vision used to detect corners within an image.     </p>
+        <p>The Harris Corner Detector works by analyzing the intensity gradients of the image to find regions where the intensity changes significantly in all directions, which typically correspond to corners. It computes the gradient of the image in both the x and y directions to form the second moment matrix at each pixel. This matrix captures the variation of intensity around a pixel. By calculating a corner response function from the eigenvalues of this matrix, the detector assigns a "cornerness" score to each pixel.        </p>
+        <p>However, the raw output from the Harris Detector often results in a high density of detected corners, many of which may be clustered closely together. To address this, I implemented Adaptive Non-Maximal Suppression (ANMS). ANMS selects a subset of the strongest corners that are also well-distributed across the image. It does this by calculating a suppression radius for each corner based on its strength relative to neighboring corners. Corners that are too close to a stronger corner are suppressed. This ensures that the selected corners are both significant and spatially diverse, which is beneficial for the subsequent feature matching process.        </p>
+        
+        
+        <div class="image-container">
+            <img src="images/col1.png" alt="Photos captured for mosaicing" width="400" 
+            height="500">
+            <img src="images/col1_harris.png" alt="Photos captured for mosaicing" width="400" 
+            height="500">
+            <img src="images/col1_anms.png" alt="Photos captured for mosaicing" width="400" 
+            height="500">
+
+            <p class="caption">Original Image / Image with 1000 Harris Corners / Image after ANMS Supression</p>
+        </div>
+
+        <div class="image-container">
+            <img src="images/imagea.png" alt="Photos captured for mosaicing" width="400" 
+            height="500">
+            <img src="images/imagea_harris.png" alt="Photos captured for mosaicing" width="400" 
+            height="500">
+            <img src="images/imagea_anms.png" alt="Photos captured for mosaicing" width="400" 
+            height="500">
+
+            <p class="caption">Original Image / Image with  Harris Corners / Image after ANMS Supression</p>
+        </div>
+        
+ 
+
+        <div class="image-container">
+            <img src="images/sun1.png" alt="Photos captured for mosaicing" width="400" 
+            height="500">
+            <img src="images/sun1_harris.png" alt="Photos captured for mosaicing" width="400" 
+            height="500">
+            <img src="images/sun1_anms.png" alt="Photos captured for mosaicing" width="400" 
+            height="500">
+
+            <p class="caption">Original Image / Image with Harris Corners / Image after ANMS Supression</p>
+        </div>
+    </section>
+
+
+    <section class="section" id="">
+        <h2>Step 2: Feature Detection </h2>
+        <p>After identifying the key interest points, I extracted feature descriptors around each of these points to capture the local image information. For each corner, I took a 40x40 pixel window centered on the corner and applied a Gaussian blur to reduce noise and minor misalignments. From this smoothed window, I extracted an 8x8 pixel patch to serve as the feature descriptor. This downsampling helps in achieving some level of scale invariance and reduces the dimensionality of the descriptor.</p>
+        <p>To ensure that the descriptors are robust to changes in illumination, I performed bias and gain normalization. This involved subtracting the mean pixel value and dividing by the standard deviation for each descriptor, resulting in descriptors with zero mean and unit variance. These normalized descriptors are more reliable for matching, as they are less affected by lighting differences between images.        </p>
+        
+    </section>
+
+    <section class="section" id="">
+        <h2>Step 3: Feature Matching </h2>
+        <p>With the feature descriptors extracted, the next step was to match features between pairs of images. I compared each descriptor from one image with all descriptors from the other image by computing the sum of squared differences (SSD). To improve the robustness of the matching, I employed Lowe's ratio test. This test involves finding the two nearest neighbors for each descriptor and computing the ratio of the SSD of the closest match to the SSD of the second closest match.</p>
+        <p>If this ratio is below a certain threshold (as suggested by Lowe, typically around 0.7 to 0.8), the match is considered good because it indicates that the closest match is significantly better than the next best. This helps to filter out ambiguous matches where a descriptor might be equally similar to multiple descriptors in the other image. By applying this ratio test, I obtained a set of reliable feature correspondences between the images.</p>
+        <div class="image-container">
+    
+            <img src="images/part3_points_col.png" alt="Photos captured for mosaicing" width="1000" 
+            height="400">
+
+            <p class="caption">Stadium with Feature Matching</p>
+        </div>
+
+        <div class="image-container">
+    
+            <img src="images/part3_points_image.png" alt="Photos captured for mosaicing" width="1000" 
+            height="400">
+
+            <p class="caption">Inside Stadium with Feature Matching</p>
+        </div>
+
+        <div class="image-container">
+    
+            <img src="images/part3_points_sun.png" alt="Photos captured for mosaicing" width="1000" 
+            height="400">
+
+            <p class="caption">Sun with Feature Matching</p>
+        </div>
+    </section>
+
+    <section class="section" id="">
+        <h2>Step 4: RANSAC Homography </h2>
+        <p>Using the matched feature points, I estimated the homography transformation between the images using the RANSAC (Random Sample Consensus) algorithm. RANSAC is an iterative method that is robust to outliers in the data. In each iteration, it randomly selects a minimal subset of correspondences (in this case, four pairs of points) to compute a candidate homography.        </p>
+        <p>This candidate homography is then used to transform all the feature points from one image to the coordinate system of the other image. I counted the number of inliers, which are points where the transformed points are within a certain error threshold of the actual matched points. The process repeats for a predefined number of iterations, and the homography with the highest number of inliers is selected as the best estimate.
+        </p>
+        <p>By using RANSAC, I was able to robustly estimate the homography despite the presence of outliers due to incorrect matches or moving objects. This homography captures the perspective transformation between the two images, which is crucial for accurate image alignment.        </p>
+    </section>
+
+
+    <section class="section" id="">
+        <h2>Step 5: Mosaics </h2>
+        <p>With the homography estimated, I proceeded to warp one image into the coordinate frame of the other using the computed homography matrix. For this step, I utilized the image warping function developed in Part A of the project. </p>
+        <p>After warping, I blended the images to create a seamless mosaic. I employed the same blending techniques from Part A, specifically the Laplacian pyramid blending function. This method blends the images across multiple frequency bands, which helps to smooth out the transition regions and handle differences in exposure or lighting between the images. Using the blending functions from the previous part allowed me to create a smooth and visually appealing mosaic without harsh edges or noticeable seams, except for the sunset picture which had a differnce in lighting between the two photos..</p>
+        <p>By automating the feature detection, matching, and homography estimation processes, and leveraging the functions developed earlier, I successfully created panoramas without manual intervention. </p>
+        <div class="image-container">
+            <img src="images/mosaic_result.jpg" alt="Photos captured for mosaicing" width="500" 
+            height="400">
+            <img src="images/col_mosaic.png" alt="Photos captured for mosaicing" width="500" 
+            height="400">
+
+            <p class="caption">Stadium Mosaic Manual / Automatic</p>
+        </div>
+
+        <div class="image-container">
+            <img src="images/mosaic_result_game.jpg" alt="Photos captured for mosaicing" width="500" 
+            height="400">
+            <img src="images/image_mosaic.png" alt="Photos captured for mosaicing" width="500" 
+            height="400">
+
+            <p class="caption">Inside Stadium Mosaic Manual / Automatic</p>
+        </div>
+
+        <div class="image-container">
+            <img src="images/mosaic_result_sun.jpg" alt="Photos captured for mosaicing" width="500" 
+            height="400">
+            <img src="images/sun_mosaic.png" alt="Photos captured for mosaicing" width="500" 
+            height="400">
+
+            <p class="caption">Sun Mosaic Manual / Automatic</p>
+        </div>
+    </section>
+
+
+    <section class="section" id="">
+        <h2>What have I learned? </h2>
+        <p>The coolest thing I learned during this project was definitely feature matching. When I finally got the feature matching algorithm working, I was genuinely surprised at how effective it was. Seeing the algorithm automatically find corresponding points between two images without any manual input was astounding. It was incredibly satisfying to see the matched features lining up perfectly and contributing to a seamless mosaic. </p>
+    </section>
+
+
+
 
  
 </body>
